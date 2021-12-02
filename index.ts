@@ -20,6 +20,7 @@ const testArray = [
     { city: "2", x: 9396, y: 14616 },
     { city: "3", x: 11252, y: 14848 },
     { city: "4", x: 11020, y: 13456 },
+    { city: "5", x: 11420, y: 12356 },
 ];
 
 // Przykladowo jeżeli mamy miasta
@@ -130,22 +131,93 @@ const sortFormLowestToHighest = (permutationsWithDistance: IPermutationWithDista
     return permutationsWithDistance.sort((a, b) => a.distance - b.distance);
 };
 
+//dobieranie w pary losowe permutacje
+const drawCouple = (data: IAllData[][]) => {
+    const copiedArray = [...data];
+    // let tempValue
+    // if(copiedArray.length % 2 !== 0) {
+    //     tempValue = copiedArray[copiedArray.length]
+    // }
+    // copiedArray.pop()
+
+    //przygotowanie odpowiedniej tablicy, np z 8 osobnikow bedzie wygladac tak [ [], [], [], [] ]
+    //https://stackoverflow.com/questions/50542832/how-to-separate-the-array-into-an-array-of-random-pairs-no-repeats
+    const shuffledArray: IAllData[][][] = Array.from(Array(Math.ceil(copiedArray.length / 2)), () => []);
+    let aN = 0;
+
+    while (copiedArray.length) {
+        shuffledArray[aN].push(copiedArray.splice(Math.random() * copiedArray.length, 1)[0]);
+        if (shuffledArray[aN].length === 2) aN++;
+    }
+
+    return shuffledArray;
+};
+
+const crossCouples = (couples: IAllData[][][]) => {
+    const allCrossedPermutations = [];
+    for (const couple of couples) {
+        if (couple.length !== 1) {
+            let start = Math.floor(Math.random() * couple[0].length - 1);
+            // //koncowy index ciecia wiekszy niz startowy
+            let end = Math.floor(Math.random() * (couple[0].length - start) + start);
+
+            const [rodzic1, rodzic2] = couple;
+
+            const elementPoCieciuRodzica = rodzic1.slice(0, end);
+            const skopiowanaCzescRodzicaDwaZaPotomkiem = rodzic2.slice(end, couple[0].length).concat(rodzic2.slice(0, end));
+
+            const ostatecznaTablicaZMiastamiDoDopushowania = [];
+
+            for (const element of skopiowanaCzescRodzicaDwaZaPotomkiem) {
+                const czyElementJestJuzWElemenciePoCieciu = elementPoCieciuRodzica.find((czesc) => czesc === element);
+
+                if (!czyElementJestJuzWElemenciePoCieciu) {
+                    ostatecznaTablicaZMiastamiDoDopushowania.push(element);
+                }
+            }
+            // const uzueplnionaTablicaPustymiMiastami = [...elementPoCieciuRodzica];
+
+            const ostatecznyZkrzyzowanyOsobnik = elementPoCieciuRodzica.concat(ostatecznaTablicaZMiastamiDoDopushowania);
+            allCrossedPermutations.push(ostatecznyZkrzyzowanyOsobnik);
+            // for (let i = 0; i < couple[0].length - elementPoCieciuRodzica.length; i++) {
+            //     uzueplnionaTablicaPustymiMiastami.push({ city: "ex", x: 0, y: 0 });
+            // }
+        } else {
+            allCrossedPermutations.push(couple[0]);
+        }
+
+        //poczatkowy index ciecia
+    }
+    return allCrossedPermutations;
+};
+
 const selection = (allPermutationsWithDistance: IAllData[][]) => {};
 
 const file = readFile();
 const parsedFile = parseFile(file);
 // console.log(parsedFile);
 const test = countRoadDistance(parsedFile);
-shuffleArray(parsedFile);
-shuffleArray(parsedFile);
-shuffleArray(parsedFile);
-shuffleArray(parsedFile);
-shuffleArray(parsedFile);
-shuffleArray(parsedFile);
-shuffleArray(parsedFile);
+// shuffleArray(parsedFile);
+// shuffleArray(parsedFile);
+// shuffleArray(parsedFile);
+// shuffleArray(parsedFile);
+// shuffleArray(parsedFile);
+// shuffleArray(parsedFile);
+// shuffleArray(parsedFile);
 // console.log(allPermutations);
+shuffleArray(testArray);
+shuffleArray(testArray);
+shuffleArray(testArray);
+shuffleArray(testArray);
+shuffleArray(testArray);
+shuffleArray(testArray);
+shuffleArray(testArray);
 const { allDistances, permutationsWithDistance } = countRoadForEveryPermutation(allPermutations);
 const lowestToHighestDistance = sortFormLowestToHighest(permutationsWithDistance);
 console.log(lowestToHighestDistance);
 const test3 = mutatePermutation(parsedFile);
 console.log(test3);
+const couples = drawCouple(allPermutations);
+console.log(couples);
+const crossedPermutations = crossCouples(couples);
+console.log(crossedPermutations);
