@@ -11,6 +11,14 @@ interface IPermutationWithDistance {
     permutation: IAllData[];
 }
 
+interface IPermutationWithRank extends IPermutationWithDistance {
+    rank: number;
+}
+
+interface IPermutationWithValue extends IPermutationWithDistance {
+    value: number;
+}
+
 const readFile = (): string[] => {
     return fs.readFileSync("/Users/pawelkonieczny/Desktop/voyager/dane/bier127.txt").toString().split("\n");
 };
@@ -127,6 +135,7 @@ const mutatePermutation = (permutation: IAllData[]) => {
     return permutation;
 };
 
+//sortujemy od najmniejszego do najwiekszego
 const sortFormLowestToHighest = (permutationsWithDistance: IPermutationWithDistance[]) => {
     return permutationsWithDistance.sort((a, b) => a.distance - b.distance);
 };
@@ -153,45 +162,109 @@ const drawCouple = (data: IAllData[][]) => {
     return shuffledArray;
 };
 
-const crossCouples = (couples: IAllData[][][]) => {
+const crossing = (couples: IAllData[][][]) => {
     const allCrossedPermutations = [];
     for (const couple of couples) {
         if (couple.length !== 1) {
-            let start = Math.floor(Math.random() * couple[0].length - 1);
-            // //koncowy index ciecia wiekszy niz startowy
-            let end = Math.floor(Math.random() * (couple[0].length - start) + start);
-
+            //z kazdego krzyzowania wychodzi nam jeden osobnik, dlatego aby byly dwa za drugim razem zamieniamy kolejnosc rodzicow i krzyzujemy jeszcze raz
             const [rodzic1, rodzic2] = couple;
+            const [rodzic3, rodzic4] = couple;
 
-            const elementPoCieciuRodzica = rodzic1.slice(0, end);
-            const skopiowanaCzescRodzicaDwaZaPotomkiem = rodzic2.slice(end, couple[0].length).concat(rodzic2.slice(0, end));
+            const ostatecznySkrzyzowanyOsobnik1 = crossCouple(rodzic1, rodzic2, couple);
+            const ostatecznySkrzyzowanyOsobnik2 = crossCouple(rodzic3, rodzic4, couple);
 
-            const ostatecznaTablicaZMiastamiDoDopushowania = [];
-
-            for (const element of skopiowanaCzescRodzicaDwaZaPotomkiem) {
-                const czyElementJestJuzWElemenciePoCieciu = elementPoCieciuRodzica.find((czesc) => czesc === element);
-
-                if (!czyElementJestJuzWElemenciePoCieciu) {
-                    ostatecznaTablicaZMiastamiDoDopushowania.push(element);
-                }
-            }
-            // const uzueplnionaTablicaPustymiMiastami = [...elementPoCieciuRodzica];
-
-            const ostatecznyZkrzyzowanyOsobnik = elementPoCieciuRodzica.concat(ostatecznaTablicaZMiastamiDoDopushowania);
-            allCrossedPermutations.push(ostatecznyZkrzyzowanyOsobnik);
-            // for (let i = 0; i < couple[0].length - elementPoCieciuRodzica.length; i++) {
-            //     uzueplnionaTablicaPustymiMiastami.push({ city: "ex", x: 0, y: 0 });
-            // }
+            allCrossedPermutations.push(ostatecznySkrzyzowanyOsobnik1);
+            allCrossedPermutations.push(ostatecznySkrzyzowanyOsobnik2);
         } else {
             allCrossedPermutations.push(couple[0]);
         }
-
-        //poczatkowy index ciecia
     }
     return allCrossedPermutations;
 };
 
-const selection = (allPermutationsWithDistance: IAllData[][]) => {};
+const crossCouple = (rodzic1: IAllData[], rodzic2: IAllData[], couple: IAllData[][]) => {
+    //poczatkowy index ciecia
+    let start = Math.floor(Math.random() * couple[0].length - 1);
+    // //koncowy index ciecia wiekszy niz startowy
+    let end = Math.floor(Math.random() * (couple[0].length - start) + start);
+
+    const ostatecznaTablicaZMiastamiDoDopushowania = [];
+
+    const elementPoCieciuRodzica = rodzic1.slice(0, end);
+    const skopiowanaCzescRodzicaDwaZaPotomkiem = rodzic2.slice(end, couple[0].length).concat(rodzic2.slice(0, end));
+
+    for (const element of skopiowanaCzescRodzicaDwaZaPotomkiem) {
+        const czyElementJestJuzWElemenciePoCieciu = elementPoCieciuRodzica.find((czesc) => czesc === element);
+
+        if (!czyElementJestJuzWElemenciePoCieciu) {
+            ostatecznaTablicaZMiastamiDoDopushowania.push(element);
+        }
+    }
+    // const uzueplnionaTablicaPustymiMiastami = [...elementPoCieciuRodzica];
+
+    const ostatecznySkrzyzowanyOsobnik = elementPoCieciuRodzica.concat(ostatecznaTablicaZMiastamiDoDopushowania);
+    return ostatecznySkrzyzowanyOsobnik;
+};
+
+const setRanksToSortedPermutations = (allPermutationsWithDistance: IPermutationWithDistance[]) => {
+    const permutationsWithRank = new Array<IPermutationWithRank>();
+
+    let i = 0;
+    for (const permutation of allPermutationsWithDistance) {
+        i++;
+        const permutationWithRank = { ...permutation, rank: i };
+        permutationsWithRank.push(permutationWithRank);
+    }
+
+    return permutationsWithRank;
+};
+
+const selection = (allPermutationsWithDistance: IPermutationWithDistance[]) => {
+    const permutationsWithRank = setRanksToSortedPermutations(allPermutationsWithDistance);
+    let sumOffAllRanks = 0;
+    permutationsWithRank.forEach((permutation) => (sumOffAllRanks = sumOffAllRanks + permutation.rank));
+
+    const permutationsWithValue = valueOfEveryPermutation(permutationsWithRank, sumOffAllRanks);
+
+    const allChoosenPermutation = new Array<IPermutationWithValue>();
+
+    for (let i = 0; i < permutationsWithValue.length; i++) {
+        const choosenPermutation = rankRoulette(permutationsWithValue);
+        allChoosenPermutation.push(choosenPermutation);
+    }
+    console.log(allChoosenPermutation);
+};
+
+const valueOfEveryPermutation = (permutationsWithRank: IPermutationWithRank[], sumOffAllRanks: number) => {
+    const permutationsWithValue = new Array<IPermutationWithValue>();
+
+    for (const permutation of permutationsWithRank) {
+        const value = permutation.rank / sumOffAllRanks;
+        const permutationWithRank = { ...permutation, value };
+        permutationsWithValue.push(permutationWithRank);
+    }
+
+    // let testValue = 0;
+    // for (const test of permutationsWithValue) {
+    //     testValue = test.value + testValue;
+    // }
+
+    return permutationsWithValue;
+};
+
+const rankRoulette = (permutationsWithValue: IPermutationWithValue[]) => {
+    //maksymalna wartosc math ranndoma, trzeba ja ustalic bo bez tego wychodziloby ponad najwyzsza wartosc ranku
+    const maxSeedValue = permutationsWithValue[permutationsWithValue.length - 1].value;
+    const seedValue = Math.random() * maxSeedValue;
+
+    const choosenPermutation = permutationsWithValue.find((permutation) => seedValue < permutation.value);
+
+    if (!choosenPermutation) {
+        throw console.log("BLAD PRZY WYBIERANIU PERMUTACJI");
+    }
+
+    return choosenPermutation;
+};
 
 const file = readFile();
 const parsedFile = parseFile(file);
@@ -212,12 +285,15 @@ shuffleArray(testArray);
 shuffleArray(testArray);
 shuffleArray(testArray);
 shuffleArray(testArray);
-const { allDistances, permutationsWithDistance } = countRoadForEveryPermutation(allPermutations);
-const lowestToHighestDistance = sortFormLowestToHighest(permutationsWithDistance);
-console.log(lowestToHighestDistance);
+
 const test3 = mutatePermutation(parsedFile);
 console.log(test3);
 const couples = drawCouple(allPermutations);
 console.log(couples);
-const crossedPermutations = crossCouples(couples);
+const crossedPermutations = crossing(couples);
 console.log(crossedPermutations);
+const { allDistances, permutationsWithDistance } = countRoadForEveryPermutation(crossedPermutations);
+const lowestToHighestDistance = sortFormLowestToHighest(permutationsWithDistance);
+console.log(lowestToHighestDistance);
+const rankedPermutations = setRanksToSortedPermutations(lowestToHighestDistance);
+const selectedPermutations = selection(lowestToHighestDistance);
