@@ -68,9 +68,7 @@ const countRoadDistance = (citiesArray: IAllData[]): number => {
     return distance;
 };
 
-const allPermutations: any = [];
-
-const shuffleArray = (citiesArray: IAllData[]) => {
+const shuffleArray = (citiesArray: IAllData[], allPermutations: IAllData[][]) => {
     // tutaj kopiujemy array zeby nie pracowac na referencji
     const arrayToShuffle = [...citiesArray];
 
@@ -219,7 +217,7 @@ const setRanksToSortedPermutations = (allPermutationsWithDistance: IPermutationW
     return permutationsWithRank;
 };
 
-const selection = (allPermutationsWithDistance: IPermutationWithDistance[]) => {
+const selection = (allPermutationsWithDistance: IPermutationWithDistance[]): IPermutationWithDistance[] => {
     const permutationsWithRank = setRanksToSortedPermutations(allPermutationsWithDistance);
     let sumOffAllRanks = 0;
     permutationsWithRank.forEach((permutation) => (sumOffAllRanks = sumOffAllRanks + permutation.rank));
@@ -232,7 +230,8 @@ const selection = (allPermutationsWithDistance: IPermutationWithDistance[]) => {
         const choosenPermutation = rankRoulette(permutationsWithValue);
         allChoosenPermutation.push(choosenPermutation);
     }
-    console.log(allChoosenPermutation);
+
+    return allChoosenPermutation;
 };
 
 const valueOfEveryPermutation = (permutationsWithRank: IPermutationWithRank[], sumOffAllRanks: number) => {
@@ -266,6 +265,58 @@ const rankRoulette = (permutationsWithValue: IPermutationWithValue[]) => {
     return choosenPermutation;
 };
 
+//skopiowane
+const start = (ileWyn: number, lbPop: number) => {
+    const file = readFile();
+    const parsedFile = parseFile(file);
+    const allPermutations = new Array<IAllData[]>();
+
+    for (let i = 0; i < ileWyn; i++) {
+        //losowanie poczatkowych osobnikow
+        for (let j = 0; j < 5; j++) {
+            shuffleArray(parsedFile, allPermutations);
+        }
+
+        const individualsAfterSelection = executeAlgorithm(allPermutations);
+        populationScope(individualsAfterSelection, lbPop);
+    }
+};
+
+const populationScope = (startingIndividuals: any, lbPop: number) => {
+    let finalIndividuals = startingIndividuals;
+    //w petli jest -1 bo pierwsza populacje wykonujemy wyzej jako populacje startowa
+    for (let i = 0; i < lbPop - 1; i++) {
+        finalIndividuals = executeAlgorithm(finalIndividuals);
+    }
+
+    console.log(finalIndividuals);
+    // const bestIndividual = getBestIndividual(finalIndividuals);
+    // const wynik = quadraticFunction({ a, b, c, x: bestIndividual });
+
+    // saveToTxt(wynik, bestIndividual);
+};
+
+const saveToTxt = (wynik: number, bestIndividual: number) => {
+    const logStream = fs.createWriteStream(`wyniki.txt`, {
+        flags: "a",
+    });
+
+    logStream.write(`${bestIndividual} ${wynik.toString()}\r\n`);
+    logStream.end();
+};
+
+const executeAlgorithm = (allPermutations: IAllData[][]): any => {
+    const couples = drawCouple(allPermutations);
+    console.log(couples);
+    const crossedPermutations = crossing(couples);
+    const { allDistances, permutationsWithDistance } = countRoadForEveryPermutation(crossedPermutations);
+    const lowestToHighestDistance = sortFormLowestToHighest(permutationsWithDistance);
+    const selectedPermutations = selection(lowestToHighestDistance);
+    return selectedPermutations;
+};
+//koniec skopiowanego
+start(1, 4);
+
 const file = readFile();
 const parsedFile = parseFile(file);
 // console.log(parsedFile);
@@ -278,22 +329,22 @@ const test = countRoadDistance(parsedFile);
 // shuffleArray(parsedFile);
 // shuffleArray(parsedFile);
 // console.log(allPermutations);
-shuffleArray(testArray);
-shuffleArray(testArray);
-shuffleArray(testArray);
-shuffleArray(testArray);
-shuffleArray(testArray);
-shuffleArray(testArray);
-shuffleArray(testArray);
+// shuffleArray(testArray);
+// shuffleArray(testArray);
+// shuffleArray(testArray);
+// shuffleArray(testArray);
+// shuffleArray(testArray);
+// shuffleArray(testArray);
+// shuffleArray(testArray);
 
 const test3 = mutatePermutation(parsedFile);
 console.log(test3);
-const couples = drawCouple(allPermutations);
-console.log(couples);
-const crossedPermutations = crossing(couples);
-console.log(crossedPermutations);
-const { allDistances, permutationsWithDistance } = countRoadForEveryPermutation(crossedPermutations);
-const lowestToHighestDistance = sortFormLowestToHighest(permutationsWithDistance);
-console.log(lowestToHighestDistance);
-const rankedPermutations = setRanksToSortedPermutations(lowestToHighestDistance);
-const selectedPermutations = selection(lowestToHighestDistance);
+// const couples = drawCouple(allPermutations);
+// console.log(couples);
+// const crossedPermutations = crossing(couples);
+// console.log(crossedPermutations);
+// const { allDistances, permutationsWithDistance } = countRoadForEveryPermutation(crossedPermutations);
+// const lowestToHighestDistance = sortFormLowestToHighest(permutationsWithDistance);
+// console.log(lowestToHighestDistance);
+// const rankedPermutations = setRanksToSortedPermutations(lowestToHighestDistance);
+// const selectedPermutations = selection(lowestToHighestDistance);
