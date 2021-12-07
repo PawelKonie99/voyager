@@ -339,6 +339,7 @@ const test = countRoadDistance(parsedFile);
 
 const test3 = mutatePermutation(parsedFile);
 console.log(test3);
+console.log(test3);
 // const couples = drawCouple(allPermutations);
 // console.log(couples);
 // const crossedPermutations = crossing(couples);
