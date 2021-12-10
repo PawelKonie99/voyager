@@ -16,7 +16,7 @@ const parseFile = (file: string[]): ICityData[] => {
     const allDataObject = new Array<ICityData>();
 
     file.splice(0, 6);
-    file.splice(file.length - 2, 2);
+    file.splice(file.length - 1, 1);
 
     for (const cityText of file) {
         //usuwanie nadwyzkowych spacji ze stringa oraz umieszczenie danych o jednym miescie do jednej komorki tablicy '4  11020  13456' -> ['4', '11020', '13456']
@@ -27,7 +27,7 @@ const parseFile = (file: string[]): ICityData[] => {
     return allDataObject;
 };
 
-const shuffleArray = (citiesArray: ICityData[], allPermutations: any) => {
+const shuffleArray = (citiesArray: ICityData[], allPermutations: IPermutationData[]) => {
     // tutaj kopiujemy array zeby nie pracowac na referencji
     const arrayToShuffle = [...citiesArray];
 
@@ -38,7 +38,7 @@ const shuffleArray = (citiesArray: ICityData[], allPermutations: any) => {
     }
 
     const doesPermutationAlreadyExist = allPermutations.find(
-        (permutation: any) => JSON.stringify(permutation) == JSON.stringify(arrayToShuffle)
+        (permutation) => JSON.stringify(permutation) == JSON.stringify(arrayToShuffle)
     );
 
     // jezeli dana permutacja wystepuje juz w tablicy z wszystkimi permutacjami to nie dodajemy jej
@@ -61,34 +61,33 @@ const findShortestRoad = (allPermutations: IPermutationData[]): IPermutationData
     if (!permutationWithShortestRoad) {
         return;
     }
+    permutationWithShortestRoad.permutation.push(permutationWithShortestRoad.permutation[0]);
 
     return permutationWithShortestRoad;
 };
 
 const start = (ileWyn: number, lbPop: number, lbOsobnikow: number) => {
-    const file = readFile();
-    const parsedFile = parseFile(file);
-    const allPermutations = new Array<IPermutationData>();
-
     for (let i = 0; i < ileWyn; i++) {
+        const file = readFile();
+        const parsedFile = parseFile(file);
+        const allPermutations = new Array<IPermutationData>();
         //losowanie poczatkowych osobnikow
-        for (let j = 0; j < 20; j++) {
+        for (let j = 0; j < lbOsobnikow; j++) {
             shuffleArray(parsedFile, allPermutations);
         }
 
         const individualsAfterSelection = executeAlgorithm(allPermutations);
-        populationScope(individualsAfterSelection, lbPop, lbOsobnikow);
+        populationScope(individualsAfterSelection, lbPop);
     }
 };
 
-const populationScope = (startingIndividuals: any, lbPop: number, lbOsobnikow: number) => {
+const populationScope = (startingIndividuals: IPermutationData[], lbPop: number) => {
     let finalIndividuals = startingIndividuals;
     //w petli jest -1 bo pierwsza populacje wykonujemy wyzej jako populacje startowa
     for (let i = 0; i < lbPop - 1; i++) {
         finalIndividuals = executeAlgorithm(finalIndividuals);
     }
 
-    console.log(finalIndividuals);
     const bestIndividual = findShortestRoad(finalIndividuals);
 
     saveToTxt(bestIndividual);
@@ -102,14 +101,17 @@ const saveToTxt = (bestIndividual: IPermutationData | undefined) => {
     if (!bestIndividual) {
         return;
     }
-    for (const city of bestIndividual?.permutation) {
-        logStream.write(`${city.city} `);
+
+    const allCities = [];
+    for (const city of bestIndividual.permutation) {
+        allCities.push(city.city);
     }
-    logStream.write(`${bestIndividual.distance}`);
+    const arrToString = JSON.stringify(allCities).replace(/,/g, " ").replace(/"/g, "").replace("[", "").replace("]", "");
+    logStream.write(`${arrToString} ${bestIndividual.distance} \r\n`);
     logStream.end();
 };
 
-const executeAlgorithm = (allPermutations: IPermutationData[]): any => {
+const executeAlgorithm = (allPermutations: IPermutationData[]): IPermutationData[] => {
     const couples = drawCouple(allPermutations);
     const crossedPermutations = crossing(couples);
     const mutatedPermutations = mutatePermutation(crossedPermutations);
@@ -119,4 +121,4 @@ const executeAlgorithm = (allPermutations: IPermutationData[]): any => {
     return selectedPermutations;
 };
 
-start(1, 10, 50);
+start(10, 10, 50);

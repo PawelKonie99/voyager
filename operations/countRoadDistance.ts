@@ -8,7 +8,11 @@ export const countRoadDistance = (citiesArray: ICityData[]): number => {
             //domkniecie trasy
             distance = Math.abs(citiesArray[i].x - citiesArray[0].x) + Math.abs(citiesArray[i].y - citiesArray[0].y) + distance;
         } else {
-            distance = Math.abs(citiesArray[i].x - citiesArray[i + 1].x) + Math.abs(citiesArray[i].y - citiesArray[i + 1].y) + distance;
+            try {
+                distance = Math.abs(citiesArray[i].x - citiesArray[i + 1].x) + Math.abs(citiesArray[i].y - citiesArray[i + 1].y) + distance;
+            } catch (e) {
+                console.log("error in countRoadDistance");
+            }
         }
     }
     return distance;

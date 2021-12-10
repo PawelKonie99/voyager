@@ -7,7 +7,11 @@ export const countRoadForEveryPermutation = (allPermutations: IPermutationData[]
     for (const permutationData of allPermutations) {
         const { permutation } = permutationData;
 
-        permutationData.distance = countRoadDistance(permutation);
+        try {
+            permutationData.distance = countRoadDistance(permutation);
+        } catch (e) {
+            console.log("error in countRoadForEveryPermutation");
+        }
         permutationsWithDistance.push(permutationData);
     }
 

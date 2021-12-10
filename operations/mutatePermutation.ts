@@ -4,7 +4,7 @@ export const mutatePermutation = (permutations: IPermutationData[]): IPermutatio
     //poczatkowy index ciecia
     let start = Math.floor(Math.random() * permutations[0].permutation.length);
     //koncowy index ciecia wiekszy niz startowy
-    let end = Math.floor(Math.random() * (permutations[0].permutation.length - start) + start + 1);
+    let end = Math.floor(Math.random() * (permutations[0].permutation.length - start) + start);
 
     const shouldBeMutated = Math.random();
 
