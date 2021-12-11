@@ -1,11 +1,12 @@
 import fs from "fs";
 import { ICityData, IPermutationData } from "./interfaces";
-import { countRoadDistance } from "./operations/countRoadDistance";
 import { countRoadForEveryPermutation } from "./operations/countRoadForEveryPermutation";
 import { crossing } from "./operations/crossing";
 import { drawCouple } from "./operations/drawCouple";
+import { findShortestRoad } from "./operations/findShortestRoad";
 import { mutatePermutation } from "./operations/mutatePermutation";
 import { selection } from "./operations/selection";
+import { shuffleArray } from "./operations/shuffleArray";
 import { sortFormLowestToHighest } from "./operations/sortFormLowestToHighest";
 
 const readFile = (): string[] => {
@@ -25,45 +26,6 @@ const parseFile = (file: string[]): ICityData[] => {
     }
 
     return allDataObject;
-};
-
-const shuffleArray = (citiesArray: ICityData[], allPermutations: IPermutationData[]) => {
-    // tutaj kopiujemy array zeby nie pracowac na referencji
-    const arrayToShuffle = [...citiesArray];
-
-    //w tym miejscu mieszamy tablice z miastami
-    for (let i = arrayToShuffle.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arrayToShuffle[i], arrayToShuffle[j]] = [arrayToShuffle[j], arrayToShuffle[i]];
-    }
-
-    const doesPermutationAlreadyExist = allPermutations.find(
-        (permutation) => JSON.stringify(permutation) == JSON.stringify(arrayToShuffle)
-    );
-
-    // jezeli dana permutacja wystepuje juz w tablicy z wszystkimi permutacjami to nie dodajemy jej
-    if (doesPermutationAlreadyExist) {
-        return;
-    }
-
-    allPermutations.push({ permutation: arrayToShuffle, value: 0, distance: 0, rank: 0 });
-};
-
-const findShortestRoad = (allPermutations: IPermutationData[]): IPermutationData | undefined => {
-    const allDistances: number[] = [];
-    for (const permutationData of allPermutations) {
-        allDistances.push(countRoadDistance(permutationData.permutation));
-    }
-
-    const shortestRoad = Math.min(...allDistances);
-    const permutationWithShortestRoad = allPermutations.find((permutation) => permutation.distance === shortestRoad);
-
-    if (!permutationWithShortestRoad) {
-        return;
-    }
-    permutationWithShortestRoad.permutation.push(permutationWithShortestRoad.permutation[0]);
-
-    return permutationWithShortestRoad;
 };
 
 const start = (ileWyn: number, lbPop: number, lbOsobnikow: number) => {
@@ -93,6 +55,16 @@ const populationScope = (startingIndividuals: IPermutationData[], lbPop: number)
     saveToTxt(bestIndividual);
 };
 
+const executeAlgorithm = (allPermutations: IPermutationData[]): IPermutationData[] => {
+    const couples = drawCouple(allPermutations);
+    const crossedPermutations = crossing(couples);
+    const mutatedPermutations = mutatePermutation(crossedPermutations);
+    const permutationsWithDistance = countRoadForEveryPermutation(mutatedPermutations);
+    const lowestToHighestDistance = sortFormLowestToHighest(permutationsWithDistance);
+    const selectedPermutations = selection(lowestToHighestDistance);
+    return selectedPermutations;
+};
+
 const saveToTxt = (bestIndividual: IPermutationData | undefined) => {
     const logStream = fs.createWriteStream(`wyniki.txt`, {
         flags: "a",
@@ -111,14 +83,4 @@ const saveToTxt = (bestIndividual: IPermutationData | undefined) => {
     logStream.end();
 };
 
-const executeAlgorithm = (allPermutations: IPermutationData[]): IPermutationData[] => {
-    const couples = drawCouple(allPermutations);
-    const crossedPermutations = crossing(couples);
-    const mutatedPermutations = mutatePermutation(crossedPermutations);
-    const permutationsWithDistance = countRoadForEveryPermutation(mutatedPermutations);
-    const lowestToHighestDistance = sortFormLowestToHighest(permutationsWithDistance);
-    const selectedPermutations = selection(lowestToHighestDistance);
-    return selectedPermutations;
-};
-
-start(10, 10, 50);
+start(10, 1000, 100);
